@@ -1,3 +1,4 @@
+import moment from 'moment';
 import {
   baseOptions,
   currentValueAnnotation,
@@ -41,6 +42,13 @@ export const optionsRt = (data, endDate) => {
   const zones = ZONES_RT;
   const [minY, maxY] = [0, getMaxY(data)];
   const [minYAxis, maxYAxis] = getYAxisLimits(minY, maxY, zones);
+
+  // Split the Rt data in two sets, recent data and previous data so we can
+  // dot the line for most recent dates. They overlap to minimize the gap
+  // between the series.
+  const dateRecent = moment().subtract(7, 'days').toDate();
+  const prevData = data.filter(d => d.x <= dateRecent);
+  const recentData = data.filter(d => d.x >= dateRecent);
   return {
     ...baseOptions,
     xAxis: {
@@ -63,7 +71,14 @@ export const optionsRt = (data, endDate) => {
         name: 'Rt',
         type: 'spline',
         zones,
-        data,
+        data: prevData,
+      },
+      {
+        name: 'Rt',
+        type: 'spline',
+        zones,
+        data: recentData,
+        dashStyle: 'Dot',
       },
     ],
     tooltip: {
